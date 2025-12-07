@@ -1,5 +1,5 @@
 <template>
   <div>
-    <h1>메인 페이지 (Home)</h1>
+    <h1>SiginIn</h1>
   </div>
 </template>
