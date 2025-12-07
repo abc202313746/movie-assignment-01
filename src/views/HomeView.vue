@@ -2,41 +2,35 @@
   <div class="home-container">
     <h1>🔥 지금 뜨는 콘텐츠</h1>
     
-    <div v-if="loading" class="loading">
-      열심히 영화 가져오는 중... 🏃‍♂️
+    <div v-if="loading" class="loading-spinner">
+      <i class="fas fa-spinner fa-spin"></i> 로딩중...
     </div>
 
     <div v-else class="movie-grid">
-      <div v-for="movie in movies" :key="movie.id" class="movie-card">
-        <div class="poster-wrapper">
-          <img 
-            :src="movieApi.getImageUrl(movie.poster_path)" 
-            :alt="movie.title" 
-            loading="lazy"
-          />
-        </div>
-        <h3>{{ movie.title }}</h3>
-      </div>
+      <MovieCard 
+        v-for="movie in movies" 
+        :key="movie.id" 
+        :movie="movie" 
+      />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { movieApi } from '../api/tmdb';
-import type { Movie } from '../types';
+import { movieApi } from '@/api/tmdb';
+import type { Movie } from '@/types';
+import MovieCard from '@/components/common/MovieCard.vue'; // 컴포넌트 불러오기
 
 const movies = ref<Movie[]>([]);
 const loading = ref(true);
 
-// 컴포넌트가 화면에 뜨자마자 실행됨
 onMounted(async () => {
   try {
     const response = await movieApi.getPopular();
     movies.value = response.data.results;
-    console.log('영화 데이터 도착! 📦', movies.value);
   } catch (error) {
-    console.error('으악! 영화 못 가져옴 😱', error);
+    console.error(error);
   } finally {
     loading.value = false;
   }
@@ -45,34 +39,26 @@ onMounted(async () => {
 
 <style scoped>
 .home-container {
-  padding: 20px;
-  color: white;
+  padding: 20px 4%; /* 좌우 여백 넷플릭스처럼 */
 }
 
 .movie-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 20px;
+  /* 반응형 그리드: 화면 크기에 따라 카드 개수 자동 조절 */
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px; /* 카드 사이 간격 */
+  padding-bottom: 50px;
 }
 
-.movie-card {
+.loading-spinner {
   text-align: center;
+  font-size: 2rem;
+  margin-top: 50px;
+  color: #E50914;
 }
 
-.poster-wrapper {
-  overflow: hidden;
-  border-radius: 8px;
-  transition: transform 0.3s ease;
-}
-
-.poster-wrapper:hover {
-  transform: scale(1.05); /* 과제 요구사항: 호버 시 확대 */
-  cursor: pointer;
-}
-
-img {
-  width: 100%;
-  height: auto;
-  border-radius: 8px;
+h1 {
+  margin-bottom: 20px;
+  font-size: 1.5rem;
 }
 </style>
