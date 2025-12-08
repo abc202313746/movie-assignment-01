@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { MovieResponse } from '../types';
+import type { MovieResponse, GenreResponse } from '../types';
 
 // 1. Axios 인스턴스 생성 (공통 설정)
 const tmdbApi = axios.create({
@@ -28,6 +28,9 @@ export const movieApi = {
   search: (query: string, page = 1) => 
     tmdbApi.get<MovieResponse>('/search/movie', { params: { query, page } }),
 
+  getGenres: () => 
+    tmdbApi.get<GenreResponse>('/genre/movie/list'),
+  
   // 영화 상세 정보 (이미지 경로 생성용 헬퍼 함수)
   getImageUrl: (path: string | null, size = 'w500') => {
     return path ? `https://image.tmdb.org/t/p/${size}${path}` : 'https://via.placeholder.com/500x750?text=No+Image';
