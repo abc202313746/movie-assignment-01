@@ -6,12 +6,22 @@
         :alt="movie.title" 
         loading="lazy"
       />
+      
+      <div class="overlay">
+        <div class="content">
+          <h4>{{ movie.title }}</h4>
+          <p class="meta">
+            <span>⭐️ {{ movie.vote_average.toFixed(1) }}</span>
+            <span>•</span>
+            <span>{{ movie.release_date.split('-')[0] }}</span>
+          </p>
+          <p class="overview">{{ truncatedOverview }}</p>
+        </div>
+      </div>
+
       <div class="wishlist-icon" :class="{ active: isLiked }">
         <i class="fas fa-heart"></i>
       </div>
-    </div>
-    <div class="info">
-      <h3>{{ movie.title }}</h3>
     </div>
   </div>
 </template>
@@ -20,11 +30,11 @@
 import { computed } from 'vue';
 import type { Movie } from '@/types';
 import { movieApi } from '@/api/tmdb';
-import { useWishlist } from '@/composables/useWishlist'; // 👈 상태 확인용으로만 유지
+import { useWishlist } from '@/composables/useWishlist';
 
 const props = defineProps<{ movie: Movie }>();
 
-// 👇 1. 부모에게 보낼 신호(이벤트) 정의! (이게 핵심)
+// 이벤트 정의 (기존 유지)
 const emit = defineEmits<{
   (e: 'toggle-like', movie: Movie): void
 }>();
@@ -33,7 +43,14 @@ const { isInWishlist } = useWishlist();
 const imageUrl = computed(() => movieApi.getImageUrl(props.movie.poster_path));
 const isLiked = computed(() => isInWishlist(props.movie.id));
 
-// 👇 2. 클릭 시 부모에게 "toggle-like" 신호 발사! (Bottom-Up)
+// 👇 추가됨: 줄거리가 너무 길면 잘라서 보여주기
+const truncatedOverview = computed(() => {
+  if (!props.movie.overview) return '상세 설명이 없습니다.';
+  return props.movie.overview.length > 60 
+    ? props.movie.overview.substring(0, 60) + '...' 
+    : props.movie.overview;
+});
+
 const toggle = () => {
   emit('toggle-like', props.movie);
 };
@@ -43,12 +60,13 @@ const toggle = () => {
 .movie-card {
   position: relative;
   cursor: pointer;
-  transition: transform 0.2s;
+  /* 호버 시 확대 효과를 위해 부모에 transition 필요 */
+  transition: transform 0.3s ease, z-index 0.3s;
 }
 
 .movie-card:hover {
-  transform: scale(1.05); 
-  z-index: 10;
+  transform: scale(1.1); /* 확대 효과 */
+  z-index: 100; /* 다른 카드들보다 위에 뜨게 */
 }
 
 .poster-wrapper {
@@ -56,40 +74,80 @@ const toggle = () => {
   border-radius: 6px;
   overflow: hidden;
   box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  aspect-ratio: 2/3; /* 포스터 비율 유지 */
 }
 
 img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
-/* 하트 아이콘 스타일 */
+/* 👇 오버레이 스타일 (평소엔 안 보임) */
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.3) 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+/* 호버 했을 때 오버레이 보이기 */
+.movie-card:hover .overlay {
+  opacity: 1;
+}
+
+.content {
+  color: white;
+  text-align: left;
+}
+
+.content h4 {
+  margin: 0 0 5px 0;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.meta {
+  font-size: 12px;
+  color: #46d369; /* 넷플릭스 매칭률 초록색 느낌 */
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.meta span {
+  margin-right: 5px;
+}
+
+.overview {
+  font-size: 11px;
+  color: #ddd;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* 하트 아이콘 */
 .wishlist-icon {
   position: absolute;
   top: 10px;
   right: 10px;
   font-size: 1.5rem;
-  color: rgba(255, 255, 255, 0.5); /* 평소엔 반투명 흰색 */
+  color: rgba(255, 255, 255, 0.5);
   transition: color 0.3s, transform 0.2s;
+  z-index: 101; /* 오버레이보다 위에 */
 }
 
 .wishlist-icon.active {
-  color: #E50914; /* 찜하면 넷플릭스 레드! */
+  color: #E50914;
   transform: scale(1.2);
-}
-
-.info {
-  margin-top: 8px;
-  padding: 0 4px;
-}
-
-h3 {
-  font-size: 14px;
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis; /* 제목 길면 ... 처리 */
-  color: #e5e5e5;
 }
 </style>
