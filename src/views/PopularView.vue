@@ -20,7 +20,7 @@
 
     <div v-if="viewMode === 'infinite'" class="infinite-view">
       <div class="movie-grid">
-        <MovieCard v-for="movie in movies" :key="movie.id" :movie="movie" />
+        <MovieCard v-for="movie in movies" :key="movie.id" :movie="movie" @toggle-like="toggleWishlist" />
       </div>
       <div v-if="loading" class="loading-bar">
         열심히 불러오는 중... 🏃‍♂️
@@ -57,7 +57,9 @@ import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { movieApi } from '@/api/tmdb';
 import type { Movie } from '@/types';
 import MovieCard from '@/components/common/MovieCard.vue';
+import { useWishlist } from '@/composables/useWishlist';
 
+const { toggleWishlist } = useWishlist();
 // 상태 관리
 const viewMode = ref<'infinite' | 'table'>('infinite'); // 기본은 무한 스크롤
 const movies = ref<Movie[]>([]);

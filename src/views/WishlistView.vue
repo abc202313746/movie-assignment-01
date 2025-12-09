@@ -13,6 +13,7 @@
         v-for="movie in wishlist" 
         :key="movie.id" 
         :movie="movie" 
+        @toggle-like="toggleWishlist"
       />
     </div>
   </div>
@@ -23,7 +24,7 @@ import { useWishlist } from '@/composables/useWishlist';
 import MovieCard from '@/components/common/MovieCard.vue';
 
 
-const { wishlist } = useWishlist();
+const { wishlist, toggleWishlist } = useWishlist();
 </script>
 
 <style scoped>

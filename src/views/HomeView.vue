@@ -11,17 +11,20 @@
         v-for="movie in movies" 
         :key="movie.id" 
         :movie="movie" 
+        @toggle-like="toggleWishlist"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useWishlist } from '@/composables/useWishlist';
 import { ref, onMounted } from 'vue';
 import { movieApi } from '@/api/tmdb';
 import type { Movie } from '@/types';
 import MovieCard from '@/components/common/MovieCard.vue'; // 컴포넌트 불러오기
 
+const { toggleWishlist } = useWishlist();
 const movies = ref<Movie[]>([]);
 const loading = ref(true);
 
