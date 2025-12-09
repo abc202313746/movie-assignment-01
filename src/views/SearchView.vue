@@ -41,13 +41,28 @@
         :movie="movie" 
         @toggle-like="toggleWishlist"
       />
+
+      <div v-if="recentKeywords.length > 0" class="history-area">
+        <span class="history-label">최근 검색어:</span>
+        <div class="history-tags">
+          <span 
+            v-for="word in recentKeywords" 
+            :key="word" 
+            class="tag"
+          >
+            <span @click="clickKeyword(word)">{{ word }}</span>
+            <button @click.stop="removeKeyword(word)" class="del-btn">x</button>
+          </span>
+        </div>
+      </div>
+
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useWishlist } from '@/composables/useWishlist';
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { movieApi } from '@/api/tmdb';
 import type { Movie, Genre } from '@/types';
 import MovieCard from '@/components/common/MovieCard.vue';
@@ -55,6 +70,7 @@ import MovieCard from '@/components/common/MovieCard.vue';
 const { toggleWishlist } = useWishlist();
 const inputRef = ref<HTMLInputElement | null>(null);
 const keyword = ref('');
+const recentKeywords = ref<string[]>([]);
 const movies = ref<Movie[]>([]);
 const genres = ref<Genre[]>([]);
 const loading = ref(false);
@@ -69,6 +85,10 @@ onMounted(async () => {
   if (inputRef.value) {
     inputRef.value.focus();
   }
+  const stored = localStorage.getItem('searchHistory');
+  if (stored) {
+    recentKeywords.value = JSON.parse(stored);
+  }
   try {
     const res = await movieApi.getGenres();
     genres.value = res.data.genres;
@@ -80,7 +100,16 @@ onMounted(async () => {
 // 영화 검색 함수
 const searchMovies = async () => {
   if (!keyword.value.trim()) return;
+  // (1) 기록에 추가 (중복 제거 & 최신순 정렬)
+  const currentHistory = recentKeywords.value.filter(k => k !== keyword.value);
+  currentHistory.unshift(keyword.value);
+  // (2) 최대 5개까지만 유지
+  if (currentHistory.length > 5) currentHistory.pop();
   
+  recentKeywords.value = currentHistory;
+  
+  // (3) 로컬 스토리지에 저장 (JSON 형식)
+  localStorage.setItem('searchHistory', JSON.stringify(recentKeywords.value));
   loading.value = true;
   searched.value = true;
   
@@ -92,6 +121,18 @@ const searchMovies = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+// 👇 4. 최근 검색어 클릭 시 검색 실행 기능
+const clickKeyword = (word: string) => {
+  keyword.value = word;
+  searchMovies();
+};
+
+// 👇 5. 기록 삭제 기능 (보너스)
+const removeKeyword = (word: string) => {
+  recentKeywords.value = recentKeywords.value.filter(k => k !== word);
+  localStorage.setItem('searchHistory', JSON.stringify(recentKeywords.value));
 };
 
 // 핵심: 받아온 영화 목록을 필터링하는 Computed 속성 
@@ -111,6 +152,49 @@ const filteredMovies = computed(() => {
 </script>
 
 <style scoped>
+  /* 👇 7. 스타일 추가 */
+.history-area {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #ccc;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tag {
+  background-color: #333;
+  padding: 4px 10px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.tag:hover {
+  background-color: #555;
+}
+
+.del-btn {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0;
+}
+.del-btn:hover {
+  color: #E50914;
+}
 .search-container {
   padding: 20px 4%;
   color: white;
