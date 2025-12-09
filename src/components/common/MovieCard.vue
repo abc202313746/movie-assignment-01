@@ -1,5 +1,5 @@
 <template>
-  <div class="movie-card" @click="toggleWishlist(movie)">
+  <div class="movie-card" @click="toggle">
     <div class="poster-wrapper">
       <img 
         :src="imageUrl" 
@@ -20,21 +20,23 @@
 import { computed } from 'vue';
 import type { Movie } from '@/types';
 import { movieApi } from '@/api/tmdb';
-import { useWishlist } from '@/composables/useWishlist';
+import { useWishlist } from '@/composables/useWishlist'; // 👈 상태 확인용으로만 유지
 
-// 부모에게서 영화 데이터 받아오기
-const props = defineProps<{
-  movie: Movie;
+const props = defineProps<{ movie: Movie }>();
+
+// 👇 1. 부모에게 보낼 신호(이벤트) 정의! (이게 핵심)
+const emit = defineEmits<{
+  (e: 'toggle-like', movie: Movie): void
 }>();
 
-// 찜하기 기능 가져오기
-const { isInWishlist, toggleWishlist } = useWishlist();
-
-// 이미지 URL 생성
+const { isInWishlist } = useWishlist();
 const imageUrl = computed(() => movieApi.getImageUrl(props.movie.poster_path));
-
-// 현재 이 영화가 찜 목록에 있는지 확인 (실시간 반응)
 const isLiked = computed(() => isInWishlist(props.movie.id));
+
+// 👇 2. 클릭 시 부모에게 "toggle-like" 신호 발사! (Bottom-Up)
+const toggle = () => {
+  emit('toggle-like', props.movie);
+};
 </script>
 
 <style scoped>
@@ -45,7 +47,7 @@ const isLiked = computed(() => isInWishlist(props.movie.id));
 }
 
 .movie-card:hover {
-  transform: scale(1.05); /* 과제 요구사항: 호버 확대 */
+  transform: scale(1.05); 
   z-index: 10;
 }
 

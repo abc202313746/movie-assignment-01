@@ -2,9 +2,9 @@
   <div class="search-container">
     <div class="search-header">
       <h1>🔍 영화 찾아보기</h1>
-      
       <div class="controls">
         <input 
+          ref="inputRef" 
           v-model="keyword" 
           @keyup.enter="searchMovies"
           type="text" 
@@ -39,17 +39,21 @@
         v-for="movie in filteredMovies" 
         :key="movie.id" 
         :movie="movie" 
+        @toggle-like="toggleWishlist"
       />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { useWishlist } from '@/composables/useWishlist';
 import { ref, computed, onMounted } from 'vue';
 import { movieApi } from '@/api/tmdb';
 import type { Movie, Genre } from '@/types';
 import MovieCard from '@/components/common/MovieCard.vue';
 
+const { toggleWishlist } = useWishlist();
+const inputRef = ref<HTMLInputElement | null>(null);
 const keyword = ref('');
 const movies = ref<Movie[]>([]);
 const genres = ref<Genre[]>([]);
@@ -62,6 +66,9 @@ const minRating = ref(0);
 
 // 초기화: 장르 목록 미리 가져오기
 onMounted(async () => {
+  if (inputRef.value) {
+    inputRef.value.focus();
+  }
   try {
     const res = await movieApi.getGenres();
     genres.value = res.data.genres;
