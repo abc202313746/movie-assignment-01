@@ -39,4 +39,24 @@ const router = createRouter({
   ]
 })
 
+router.beforeEach((to, from, next) => {
+  const token = localStorage.getItem('TMDb-Key');
+  const isLoggedIn = !!token;
+
+  // 1. 로그인 페이지로 가는 경우엔 그냥 통과
+  if (to.path === '/signin') {
+    next();
+    return;
+  }
+
+  // 2. 로그인이 안 되어 있는데 다른 페이지를 가려고 하면?
+  if (!isLoggedIn) {
+    // alert('로그인이 필요한 페이지입니다! 👮‍♂️'); // 너무 자주 뜨면 귀찮으니 주석 처리 가능
+    next('/signin'); // 로그인 페이지로 강제 납치
+  } else {
+    // 3. 로그인 되어 있으면 통과
+    next(); 
+  }
+});
+
 export default router
