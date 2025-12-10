@@ -12,7 +12,12 @@
       </ul>
 
       <div class="right-menu">
-        <router-link to="/signin" class="login-btn">로그인</router-link>
+        <div v-if="isLoggedIn" class="user-info">
+          <span class="username">{{ currentId }}님</span>
+          <button @click="logout" class="logout-btn">로그아웃</button>
+        </div>
+        
+        <router-link v-else to="/signin" class="login-btn">로그인</router-link>
       </div>
     </nav>
   </header>
@@ -20,10 +25,13 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
+import { useAuth } from '@/composables/useAuth'; // 훅 가져오기
 
 const isScrolled = ref(false);
 
-// 스크롤 감지해서 헤더 색깔 바꾸기 (과제 요구사항: 애니메이션 필수 [cite: 319])
+// Auth 기능 연결
+const { isLoggedIn, currentId, logout } = useAuth();
+
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50;
 };
@@ -97,6 +105,93 @@ nav {
   font-weight: bold;
   font-size: 15px;
 }
+header {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  height: 70px;
+  padding: 0 4%;
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+  background: transparent;
+  transition: background 0.5s ease;
+}
+
+header.scrolled {
+  background: #141414;
+}
+
+nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.logo a {
+  font-size: 30px;
+  font-weight: bold;
+  color: #E50914;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+  margin-left: 30px;
+}
+
+.nav-links a {
+  color: #e5e5e5;
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s;
+}
+
+.nav-links a:hover {
+  color: #b3b3b3;
+}
+
+.login-btn {
+  background-color: #E50914;
+  color: white;
+  padding: 7px 17px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 15px;
+}
+
+/* 👇 추가된 스타일: 유저 정보 및 로그아웃 버튼 */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: white;
+  font-size: 14px;
+}
+
+.username {
+  font-weight: bold;
+}
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid #fff;
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: 13px;
+}
+
+.logout-btn:hover {
+  background: #E50914;
+  border-color: #E50914;
+}
 
 @media (max-width: 768px) {
   header {
@@ -126,6 +221,11 @@ nav {
     margin-top: 5px;
     margin-bottom: 10px;
   }
+  header { height: auto; padding: 10px 4%; background: #141414; }
+  nav { flex-direction: column; gap: 15px; }
+  .nav-links { margin-left: 0; gap: 15px; flex-wrap: wrap; justify-content: center; padding: 0; }
+  .logo a { font-size: 24px; }
+  .right-menu { margin-top: 5px; margin-bottom: 10px; }
 }
 
 </style>
