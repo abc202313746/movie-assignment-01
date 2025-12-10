@@ -25,18 +25,32 @@
           <option :value="7">⭐️ 7점 이상</option>
           <option :value="9">⭐️ 9점 이상</option>
         </select>
+
+        <!-- 👇 추가: 정렬 기능 -->
+        <select v-model="sortBy" class="filter-select">
+          <option value="default">정렬 안함</option>
+          <option value="rating_desc">평점 높은순</option>
+          <option value="rating_asc">평점 낮은순</option>
+          <option value="date_desc">최신순</option>
+          <option value="date_asc">오래된순</option>
+        </select>
+
+        <!-- 👇 추가: 초기화 버튼 (필수!) -->
+        <button @click="resetFilters" class="reset-btn">
+          🔄 초기화
+        </button>
       </div>
     </div>
 
     <div v-if="loading" class="loading">검색 중... 🏃‍♂️</div>
     
-    <div v-else-if="filteredMovies.length === 0 && searched" class="no-result">
+    <div v-else-if="sortedMovies.length === 0 && searched" class="no-result">
       검색 결과가 없어요 😢
     </div>
 
     <div v-else class="movie-grid">
       <MovieCard 
-        v-for="movie in filteredMovies" 
+        v-for="movie in sortedMovies" 
         :key="movie.id" 
         :movie="movie" 
         @toggle-like="toggleWishlist"
@@ -55,14 +69,13 @@
           </span>
         </div>
       </div>
-
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { useWishlist } from '@/composables/useWishlist';
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { movieApi } from '@/api/tmdb';
 import type { Movie, Genre } from '@/types';
 import MovieCard from '@/components/common/MovieCard.vue';
@@ -74,13 +87,13 @@ const recentKeywords = ref<string[]>([]);
 const movies = ref<Movie[]>([]);
 const genres = ref<Genre[]>([]);
 const loading = ref(false);
-const searched = ref(false); // 검색을 한번이라도 했는지 체크
+const searched = ref(false);
 
 // 필터 상태
 const selectedGenre = ref<number | null>(null);
 const minRating = ref(0);
+const sortBy = ref('default'); // 👈 추가: 정렬 상태
 
-// 초기화: 장르 목록 미리 가져오기
 onMounted(async () => {
   if (inputRef.value) {
     inputRef.value.focus();
@@ -97,18 +110,13 @@ onMounted(async () => {
   }
 });
 
-// 영화 검색 함수
 const searchMovies = async () => {
   if (!keyword.value.trim()) return;
-  // (1) 기록에 추가 (중복 제거 & 최신순 정렬)
   const currentHistory = recentKeywords.value.filter(k => k !== keyword.value);
   currentHistory.unshift(keyword.value);
-  // (2) 최대 5개까지만 유지
   if (currentHistory.length > 5) currentHistory.pop();
   
   recentKeywords.value = currentHistory;
-  
-  // (3) 로컬 스토리지에 저장 (JSON 형식)
   localStorage.setItem('searchHistory', JSON.stringify(recentKeywords.value));
   loading.value = true;
   searched.value = true;
@@ -123,36 +131,60 @@ const searchMovies = async () => {
   }
 };
 
-// 👇 4. 최근 검색어 클릭 시 검색 실행 기능
 const clickKeyword = (word: string) => {
   keyword.value = word;
   searchMovies();
 };
 
-// 👇 5. 기록 삭제 기능 (보너스)
 const removeKeyword = (word: string) => {
   recentKeywords.value = recentKeywords.value.filter(k => k !== word);
   localStorage.setItem('searchHistory', JSON.stringify(recentKeywords.value));
 };
 
-// 핵심: 받아온 영화 목록을 필터링하는 Computed 속성 
+// 👇 추가: 초기화 함수 (필수!)
+const resetFilters = () => {
+  selectedGenre.value = null;
+  minRating.value = 0;
+  sortBy.value = 'default';
+};
+
+// 1단계: 필터링
 const filteredMovies = computed(() => {
   return movies.value.filter(movie => {
-    // 1. 장르 필터
     const genreMatch = selectedGenre.value 
       ? movie.genre_ids.includes(selectedGenre.value) 
       : true;
       
-    // 2. 평점 필터
     const ratingMatch = movie.vote_average >= minRating.value;
 
     return genreMatch && ratingMatch;
   });
 });
+
+// 👇 추가: 2단계 정렬
+const sortedMovies = computed(() => {
+  const list = [...filteredMovies.value]; // 원본 보호
+  
+  switch (sortBy.value) {
+    case 'rating_desc':
+      return list.sort((a, b) => b.vote_average - a.vote_average);
+    case 'rating_asc':
+      return list.sort((a, b) => a.vote_average - b.vote_average);
+    case 'date_desc':
+      return list.sort((a, b) => 
+        new Date(b.release_date).getTime() - new Date(a.release_date).getTime()
+      );
+    case 'date_asc':
+      return list.sort((a, b) => 
+        new Date(a.release_date).getTime() - new Date(b.release_date).getTime()
+      );
+    default:
+      return list;
+  }
+});
 </script>
 
 <style scoped>
-  /* 👇 7. 스타일 추가 */
 .history-area {
   margin-top: 15px;
   font-size: 14px;
@@ -192,9 +224,11 @@ const filteredMovies = computed(() => {
   font-size: 12px;
   padding: 0;
 }
+
 .del-btn:hover {
   color: #E50914;
 }
+
 .search-container {
   padding: 20px 4%;
   color: white;
@@ -210,7 +244,7 @@ const filteredMovies = computed(() => {
   gap: 10px;
   justify-content: center;
   margin-top: 20px;
-  flex-wrap: wrap; /* 모바일 대응 */
+  flex-wrap: wrap;
 }
 
 .search-input {
@@ -227,12 +261,40 @@ const filteredMovies = computed(() => {
   border: none;
   background-color: #333;
   color: white;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.filter-select:hover {
+  background-color: #444;
+}
+
+/* 👇 추가: 초기화 버튼 스타일 */
+.reset-btn {
+  padding: 10px 20px;
+  border-radius: 4px;
+  border: none;
+  background-color: #E50914;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.reset-btn:hover {
+  background-color: #b20710;
 }
 
 .movie-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 20px;
+}
+
+.loading {
+  text-align: center;
+  font-size: 1.2rem;
+  padding: 50px;
 }
 
 .no-result {
