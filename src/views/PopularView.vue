@@ -57,9 +57,13 @@ import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { movieApi } from '@/api/tmdb';
 import type { Movie } from '@/types';
 import MovieCard from '@/components/common/MovieCard.vue';
-import { useWishlist } from '@/composables/useWishlist';
-
-const { toggleWishlist } = useWishlist();
+//import { useWishlist } from '@/composables/useWishlist';
+import { useWishlistStore } from '@/stores/wishlist';
+const wishlistStore = useWishlistStore();
+// 템플릿에서 @toggle-like="wishlistStore.toggleWishlist" 로 써도 되지만,
+// 기존 코드 유지를 위해 변수에 할당
+const toggleWishlist = wishlistStore.toggleWishlist;
+//const { toggleWishlist } = useWishlist();
 // 상태 관리
 const viewMode = ref<'infinite' | 'table'>('infinite'); // 기본은 무한 스크롤
 const movies = ref<Movie[]>([]);

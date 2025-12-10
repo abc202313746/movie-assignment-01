@@ -27,34 +27,37 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import type { Movie } from '@/types';
-import { movieApi } from '@/api/tmdb';
-import { useWishlist } from '@/composables/useWishlist';
-
-const props = defineProps<{ movie: Movie }>();
-
-// 이벤트 정의 (기존 유지)
-const emit = defineEmits<{
-  (e: 'toggle-like', movie: Movie): void
-}>();
-
-const { isInWishlist } = useWishlist();
-const imageUrl = computed(() => movieApi.getImageUrl(props.movie.poster_path));
-const isLiked = computed(() => isInWishlist(props.movie.id));
-
-// 👇 추가됨: 줄거리가 너무 길면 잘라서 보여주기
-const truncatedOverview = computed(() => {
-  if (!props.movie.overview) return '상세 설명이 없습니다.';
-  return props.movie.overview.length > 60 
-    ? props.movie.overview.substring(0, 60) + '...' 
-    : props.movie.overview;
-});
-
-const toggle = () => {
-  emit('toggle-like', props.movie);
-};
-</script>
+  import { computed } from 'vue';
+  import type { Movie } from '@/types';
+  import { movieApi } from '@/api/tmdb';
+  import { useWishlistStore } from '@/stores/wishlist';
+  
+  const wishlistStore = useWishlistStore();
+  
+  const props = defineProps<{ movie: Movie }>();
+  
+  const emit = defineEmits<{
+    (e: 'toggle-like', movie: Movie): void
+  }>();
+  
+  const imageUrl = computed(() => movieApi.getImageUrl(props.movie.poster_path));
+  
+  // 👇 올바른 isLiked 선언 (하나만!)
+  const isLiked = computed(() => 
+    wishlistStore.isInWishlist(props.movie.id)
+  );
+  
+  const truncatedOverview = computed(() => {
+    if (!props.movie.overview) return '상세 설명이 없습니다.';
+    return props.movie.overview.length > 60 
+      ? props.movie.overview.substring(0, 60) + '...' 
+      : props.movie.overview;
+  });
+  
+  const toggle = () => {
+    emit('toggle-like', props.movie);
+  };
+  </script>
 
 <style scoped>
 .movie-card {
