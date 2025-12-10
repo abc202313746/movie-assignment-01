@@ -239,4 +239,49 @@ onUnmounted(() => {
   box-shadow: 0 4px 10px rgba(0,0,0,0.5);
   z-index: 100;
 }
+
+/* 👇 맨 아래에 추가: 모바일 테이블 뷰 최적화 */
+@media (max-width: 768px) {
+  .popular-container {
+    padding: 10px 3%; /* 전체 여백 줄임 */
+  }
+
+  .list-item {
+    padding: 10px 5px; /* 리스트 내부 여백 줄임 */
+  }
+
+  .rank {
+    width: 30px;      /* 순위 숫자 칸 줄임 */
+    font-size: 16px;  /* 숫자 크기 줄임 */
+    margin-right: 5px;
+  }
+
+  .tiny-poster {
+    width: 40px;      /* 포스터 크기 조금 줄임 */
+    margin-right: 10px;
+  }
+
+  .list-info h3 {
+    font-size: 14px;  /* 제목 글자 크기 줄임 */
+    /* 제목이 너무 길면 두 줄까지만 보여주고 ... 처리 */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  
+  .list-info p {
+    font-size: 12px; /* 평점 글자 줄임 */
+  }
+  
+  /* 페이지네이션 버튼도 모바일에선 작게 */
+  .pagination {
+    gap: 10px;
+  }
+  .pagination button {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+}
+
 </style>
