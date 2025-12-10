@@ -24,6 +24,14 @@ export const movieApi = {
   getNowPlaying: (page = 1) => 
     tmdbApi.get<MovieResponse>('/movie/now_playing', { params: { page } }),
   
+  // 👇 API 3: 평점 높은 영화 추가
+  getTopRated: (page = 1) =>
+    tmdbApi.get<MovieResponse>('/movie/top_rated', { params: { page } }),
+
+  // 👇 API 4: 개봉 예정 영화 추가
+  getUpcoming: (page = 1) =>
+    tmdbApi.get<MovieResponse>('/movie/upcoming', { params: { page } }),
+  
   // 영화 검색
   search: (query: string, page = 1) => 
     tmdbApi.get<MovieResponse>('/search/movie', { params: { query, page } }),
