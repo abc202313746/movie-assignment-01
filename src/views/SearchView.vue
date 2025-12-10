@@ -74,13 +74,17 @@
 </template>
 
 <script setup lang="ts">
-import { useWishlist } from '@/composables/useWishlist';
+//import { useWishlist } from '@/composables/useWishlist';
 import { ref, computed, onMounted } from 'vue';
 import { movieApi } from '@/api/tmdb';
 import type { Movie, Genre } from '@/types';
 import MovieCard from '@/components/common/MovieCard.vue';
-
-const { toggleWishlist } = useWishlist();
+import { useWishlistStore } from '@/stores/wishlist';
+const wishlistStore = useWishlistStore();
+// 템플릿에서 @toggle-like="wishlistStore.toggleWishlist" 로 써도 되지만,
+// 기존 코드 유지를 위해 변수에 할당
+const toggleWishlist = wishlistStore.toggleWishlist;
+//const { toggleWishlist } = useWishlist();
 const inputRef = ref<HTMLInputElement | null>(null);
 const keyword = ref('');
 const recentKeywords = ref<string[]>([]);

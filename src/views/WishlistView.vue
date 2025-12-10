@@ -20,13 +20,19 @@
 </template>
 
 <script setup lang="ts">
-import { useWishlist } from '@/composables/useWishlist';
-import MovieCard from '@/components/common/MovieCard.vue';
-
-
-const { wishlist, toggleWishlist } = useWishlist();
-</script>
-
+  import MovieCard from '@/components/common/MovieCard.vue';
+  import { storeToRefs } from 'pinia';
+  import { useWishlistStore } from '@/stores/wishlist';
+  
+  const wishlistStore = useWishlistStore();
+  
+  // 스토어에서 상태(변수)를 꺼낼 땐 storeToRefs를 써야 반응형이 안 깨짐!
+  const { wishlist } = storeToRefs(wishlistStore);
+  
+  // 👇 toggleWishlist도 store에서 가져오기
+  const toggleWishlist = wishlistStore.toggleWishlist;
+  </script>
+  
 <style scoped>
 .wishlist-container {
   padding: 20px 4%;
