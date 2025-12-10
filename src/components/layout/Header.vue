@@ -97,4 +97,35 @@ nav {
   font-weight: bold;
   font-size: 15px;
 }
+
+@media (max-width: 768px) {
+  header {
+    height: auto; /* 높이 자동 조절 */
+    padding: 10px 4%;
+    background: #141414; /* 모바일에선 가독성을 위해 배경색 고정 */
+  }
+
+  nav {
+    flex-direction: column; /* 세로로 쌓기 */
+    gap: 15px;
+  }
+
+  .nav-links {
+    margin-left: 0;
+    gap: 15px; /* 간격 줄이기 */
+    flex-wrap: wrap; /* 줄바꿈 허용 */
+    justify-content: center;
+    padding: 0; /* 패딩 초기화 */
+  }
+  
+  .logo a {
+    font-size: 24px; /* 로고 크기 살짝 줄이기 */
+  }
+  
+  .right-menu {
+    margin-top: 5px;
+    margin-bottom: 10px;
+  }
+}
+
 </style>
