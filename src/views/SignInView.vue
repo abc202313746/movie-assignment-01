@@ -2,91 +2,94 @@
   <div class="auth-container">
     <div class="background-overlay"></div>
 
-    <div class="auth-box">
-      <transition name="fade" mode="out-in">
+    <div class="wrapper">
+      <div class="title-text">
+        <div class="title login" :class="{ active: isLoginMode }">Login Form</div>
+        <div class="title signup" :class="{ active: !isLoginMode }">Signup Form</div>
+      </div>
+      
+      <div class="slide-controls">
+        <input type="radio" name="slide" id="login" :checked="isLoginMode" @change="setMode(true)">
+        <input type="radio" name="slide" id="signup" :checked="!isLoginMode" @change="setMode(false)">
         
-        <div v-if="isLoginMode" key="login" class="form-container">
-          <h2>로그인</h2>
-          <form @submit.prevent="handleLogin">
-            <input v-model="email" type="email" placeholder="이메일 주소" required />
-            <input v-model="password" type="password" placeholder="비밀번호 (TMDB API Key)" required />
-            
-            <button type="submit" class="submit-btn">로그인</button>
-            
-            <div class="options">
-              <label>
-                <input v-model="rememberMe" type="checkbox" /> 로그인 정보 저장
-              </label>
-              <span class="help">도움이 필요하신가요?</span>
+        <label for="login" class="slide login" @click="setMode(true)">Login</label>
+        <label for="signup" class="slide signup" @click="setMode(false)">Signup</label>
+        
+        <div class="slider-tab" :style="{ left: isLoginMode ? '0%' : '50%' }"></div>
+      </div>
+
+      <div class="form-container">
+        <div class="form-inner" :style="{ marginLeft: isLoginMode ? '0%' : '-100%' }">
+          
+          <form @submit.prevent="handleLogin" class="login">
+            <div class="field">
+              <input v-model="email" type="text" placeholder="Email Address" required>
+            </div>
+            <div class="field">
+              <input v-model="password" type="password" placeholder="Password (API Key)" required>
+            </div>
+            <div class="pass-link"><a href="#">Forgot password?</a></div>
+            <div class="field btn">
+              <div class="btn-layer"></div>
+              <input type="submit" value="Login">
+            </div>
+            <div class="signup-link">
+              Not a member? <a href="#" @click.prevent="setMode(false)">Signup now</a>
             </div>
           </form>
-          
-          <p class="switch-msg">
-            Netflix 회원이 아니신가요? 
-            <a href="#" @click.prevent="toggleMode">지금 가입하세요.</a>
-          </p>
-        </div>
 
-        <div v-else key="signup" class="form-container">
-          <h2>회원가입</h2>
-          <form @submit.prevent="handleRegister">
-            <input v-model="email" type="email" placeholder="이메일 주소" required />
-            <input v-model="password" type="password" placeholder="비밀번호 (TMDB API Key 입력!)" required />
-            <input v-model="confirmPassword" type="password" placeholder="비밀번호 확인" required />
-            
-            <label class="terms">
-              <input v-model="agreed" type="checkbox" required />
-              (필수) 개인정보 처리방침에 동의합니다.
-            </label>
-
-            <button type="submit" class="submit-btn">회원가입</button>
+          <form @submit.prevent="handleRegister" class="signup">
+            <div class="field">
+              <input v-model="email" type="text" placeholder="Email Address" required>
+            </div>
+            <div class="field">
+              <input v-model="password" type="password" placeholder="Password (API Key)" required>
+            </div>
+            <div class="field">
+              <input v-model="confirmPassword" type="password" placeholder="Confirm Password" required>
+            </div>
+            <div class="field terms">
+               <label>
+                 <input v-model="agreed" type="checkbox" required />
+                 (필수) 개인정보 처리방침 동의
+               </label>
+            </div>
+            <div class="field btn">
+              <div class="btn-layer"></div>
+              <input type="submit" value="Signup">
+            </div>
           </form>
-          
-          <p class="switch-msg">
-            이미 회원이신가요? 
-            <a href="#" @click.prevent="toggleMode">로그인하기</a>
-          </p>
-        </div>
 
-      </transition>
+        </div>
+      </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import { useAuth } from '@/composables/useAuth';
 
 const { login, register } = useAuth();
 
 // 상태 관리
-const isLoginMode = ref(true); // true: 로그인, false: 회원가입
+const isLoginMode = ref(true);
 const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
-const rememberMe = ref(false);
 const agreed = ref(false);
 
-// 초기화: 저장된 아이디 불러오기
-onMounted(() => {
-  const savedId = localStorage.getItem('rememberedId');
-  if (savedId) {
-    email.value = savedId;
-    rememberMe.value = true;
-  }
-});
-
-// 화면 전환 토글
-const toggleMode = () => {
-  isLoginMode.value = !isLoginMode.value;
-  // 입력창 초기화
+// 모드 변경 함수
+const setMode = (isLogin: boolean) => {
+  isLoginMode.value = isLogin;
+  // 폼 초기화
   password.value = '';
   confirmPassword.value = '';
 };
 
 // 로그인 처리
 const handleLogin = () => {
-  login(email.value, password.value, rememberMe.value);
+  login(email.value, password.value, true);
 };
 
 // 회원가입 처리
@@ -96,119 +99,227 @@ const handleRegister = () => {
     return;
   }
   if (!agreed.value) {
-    alert('약관에 동의해야 합니다!');
+    alert('약관에 동의해주세요!');
     return;
   }
-  
-  // 비밀번호가 API Key 역할을 하므로, 여기서 API Key를 입력받아 저장함
   const success = register(email.value, password.value);
   if (success) {
-    toggleMode(); // 성공하면 로그인 화면으로 이동
+    setMode(true); // 성공 시 로그인 탭으로 이동
   }
 };
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css?family=Poppins:400,500,600,700&display=swap');
+
 .auth-container {
-  position: relative;
-  height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  background: url('https://assets.nflxext.com/ffe/siteui/vlv3/f841d4c7-10e1-40af-bcae-07a3f8dc141a/f6d7434e-d6de-4185-a6d4-c77a2d08737b/KR-ko-20220502-popsignuptwoweeks-perspective_alpha_website_medium.jpg') no-repeat center center/cover;
+  min-height: 100vh;
+  background: linear-gradient(-135deg, #c850c0, #4158d0);
+  font-family: 'Poppins', sans-serif;
+  padding: 15px;
 }
 
-.background-overlay {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0, 0, 0, 0.6); /* 어두운 배경 처리 */
+.wrapper {
+  overflow: hidden;
+  max-width: 390px;
+  background: #fff;
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0px 15px 20px rgba(0,0,0,0.1);
 }
 
-.auth-box {
-  position: relative;
-  background: rgba(0, 0, 0, 0.75);
-  padding: 60px 68px 40px;
-  width: 450px;
-  min-height: 500px;
-  border-radius: 4px;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-  z-index: 10;
-}
-
-h2 {
-  color: white;
-  font-size: 32px;
-  font-weight: bold;
-  margin-bottom: 28px;
-}
-
-input {
-  width: 100%;
-  background: #333;
-  border: none;
-  border-radius: 4px;
-  color: white;
-  height: 50px;
-  line-height: 50px;
-  padding: 0 20px;
-  margin-bottom: 16px;
-  font-size: 16px;
-  box-sizing: border-box;
-}
-
-.submit-btn {
-  width: 100%;
-  background: #E50914;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  border: none;
-  border-radius: 4px;
-  padding: 16px;
-  margin-top: 24px;
-  cursor: pointer;
-  margin-bottom: 10px;
-}
-
-.options {
+.wrapper .title-text {
   display: flex;
+  width: 200%;
+}
+
+.wrapper .title {
+  width: 50%;
+  font-size: 35px;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.slide-controls {
+  position: relative;
+  display: flex;
+  height: 50px;
+  width: 100%;
+  overflow: hidden;
+  margin: 30px 0 10px 0;
   justify-content: space-between;
+  border: 1px solid lightgrey;
+  border-radius: 15px;
+}
+
+.slide-controls .slide {
+  height: 100%;
+  width: 100%;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 500;
+  text-align: center;
+  line-height: 48px;
+  cursor: pointer;
+  z-index: 1;
+  transition: all 0.6s ease;
+}
+
+.slide-controls label.slide {
+  color: #000;
+}
+
+/* 움직이는 배경 탭 */
+.slide-controls .slider-tab {
+  position: absolute;
+  height: 100%;
+  width: 50%;
+  left: 0;
+  z-index: 0;
+  border-radius: 15px;
+  background: -webkit-linear-gradient(left, #a445b2, #fa4299);
+  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+input[type="radio"] {
+  display: none;
+}
+
+/* 선택된 텍스트 색상 변경 */
+#login:checked ~ label.login {
+  color: #fff;
+  cursor: default;
+  user-select: none;
+}
+#signup:checked ~ label.signup {
+  color: #fff;
+  cursor: default;
+  user-select: none;
+}
+#login:checked ~ .slider-tab {
+  left: 0%;
+}
+#signup:checked ~ .slider-tab {
+  left: 50%;
+}
+
+/* 폼 슬라이딩 영역 */
+.form-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.form-container .form-inner {
+  display: flex;
+  width: 200%;
+}
+
+.form-container .form-inner form {
+  width: 50%;
+  transition: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.field {
+  height: 50px;
+  width: 100%;
+  margin-top: 20px;
+}
+
+.field input {
+  height: 100%;
+  width: 100%;
+  outline: none;
+  padding-left: 15px;
+  border-radius: 15px;
+  border: 1px solid lightgrey;
+  border-bottom-width: 2px;
+  font-size: 17px;
+  transition: all 0.3s ease;
+}
+
+/* 인풋 애니메이션 효과 (FrontendJoe 스타일) */
+.field input:focus,
+.field input:valid {
+  border-color: #fa4299;
+}
+
+.field input::placeholder {
+  color: #999;
+  transition: all 0.3s ease;
+}
+
+.field input:focus::placeholder {
   color: #b3b3b3;
-  font-size: 13px;
 }
 
-.switch-msg {
-  color: #737373;
-  margin-top: 16px;
-  font-size: 16px;
+.pass-link {
+  margin-top: 5px;
 }
-
-.switch-msg a {
-  color: white;
+.pass-link a,
+.signup-link a {
+  color: #fa4299;
   text-decoration: none;
 }
-.switch-msg a:hover {
+.pass-link a:hover,
+.signup-link a:hover {
   text-decoration: underline;
 }
 
+.signup-link {
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* 버튼 애니메이션 */
+.btn {
+  height: 50px;
+  width: 100%;
+  border-radius: 15px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn .btn-layer {
+  height: 100%;
+  width: 300%;
+  position: absolute;
+  left: -100%;
+  background: -webkit-linear-gradient(right, #a445b2, #fa4299, #a445b2, #fa4299);
+  border-radius: 15px;
+  transition: all 0.4s ease;
+}
+
+.btn:hover .btn-layer {
+  left: 0;
+}
+
+.btn input[type="submit"] {
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+  position: relative;
+  background: none;
+  border: none;
+  color: #fff;
+  padding-left: 0;
+  border-radius: 15px;
+  font-size: 20px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
 .terms {
-  display: block;
-  color: #b3b3b3;
-  font-size: 13px;
-  margin-bottom: 10px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
 }
-
-/* 전환 애니메이션 (Vue Transition) */
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
+.terms input {
+  width: auto;
+  height: auto;
+  margin-right: 10px;
 }
 </style>
