@@ -3,10 +3,17 @@ import { createPinia } from 'pinia'
 import './style.css'
 import App from './App.vue'
 import router from './router' 
+import Toast from "vue-toastification";
+import "vue-toastification/dist/index.css";
 import '@fortawesome/fontawesome-free/css/all.css' 
 
 const app = createApp(App)
 
 app.use(createPinia())
-app.use(router) 
+app.use(router)
+app.use(Toast, {
+  position: "top-right",
+  timeout: 3000
+});
+
 app.mount('#app')
